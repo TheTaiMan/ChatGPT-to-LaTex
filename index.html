@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Character Replacer</title>
+    <script>
+      function replaceCharacters() {
+        // Get the text from the text area
+        let inputText = document.getElementById('inputText').value
+
+        // Replace the characters and remove spaces before and after them
+        let replacedText = inputText
+          .replace(/\s*\\\(\s*/g, ' $')
+          .replace(/\s*\\\)\s*/g, '$ ')
+          .replace(/\s*\\\[\s*/g, '$$$')
+          .replace(/\s*\\\]\s*/g, '$$$')
+
+        // Display the replaced text in the output div
+        document.getElementById('output').innerText = replacedText
+      }
+
+      function copyToClipboard() {
+        // Create a temporary textarea to hold the text
+        let tempTextArea = document.createElement('textarea')
+        tempTextArea.value = document.getElementById('output').innerText
+
+        // Append the textarea to the DOM
+        document.body.appendChild(tempTextArea)
+
+        // Select the text
+        tempTextArea.select()
+
+        // Execute the copy command
+        document.execCommand('copy')
+
+        // Remove the temporary textarea
+        document.body.removeChild(tempTextArea)
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Character Replacer</h1>
+    <textarea id="inputText" rows="4" cols="50"></textarea><br />
+    <button onclick="replaceCharacters()">Replace</button>
+    <div id="output"></div>
+    <button onclick="copyToClipboard()">Copy Output</button>
+  </body>
+</html>
