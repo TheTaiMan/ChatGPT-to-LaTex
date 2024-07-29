@@ -29,36 +29,40 @@
         let lines = inputText.split('\n')
         let inDisplayMath = false
         let displayMathContent = ''
+        let convertedLines = []
 
-        let convertedLines = lines
-          .map((line) => {
-            // Check if we're in a display math block
-            if (inDisplayMath) {
-              if (line.includes('\\]')) {
-                // End of display math block
-                inDisplayMath = false
-                displayMathContent += line.split('\\]')[0]
-                let convertedMath = replaceDisplayMath(
-                  '\\[' + displayMathContent + '\\]'
-                )
-                displayMathContent = ''
-                return convertedMath + replaceInlineMath(line.split('\\]')[1])
-              } else {
-                // Continue collecting display math content
-                displayMathContent += line + '\n'
-                return null // This line will be skipped in the final output
-              }
-            } else if (line.includes('\\[')) {
-              // Start of display math block
-              inDisplayMath = true
-              displayMathContent = line.split('\\[')[1] + '\n'
-              return replaceInlineMath(line.split('\\[')[0])
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i]
+
+          if (inDisplayMath) {
+            if (line.includes('\\]')) {
+              // End of display math block
+              inDisplayMath = false
+              displayMathContent += line.split('\\]')[0]
+              let convertedMath = replaceDisplayMath(
+                '\\[' + displayMathContent + '\\]'
+              )
+              displayMathContent = ''
+              convertedLines.push(
+                convertedMath + replaceInlineMath(line.split('\\]')[1])
+              )
             } else {
-              // Regular line, just replace inline math
-              return replaceInlineMath(line)
+              // Continue collecting display math content
+              displayMathContent += line + '\n'
             }
-          })
-          .filter((line) => line !== null) // Remove null lines (skipped display math content)
+          } else if (line.includes('\\[')) {
+            // Start of display math block
+            inDisplayMath = true
+            displayMathContent = line.split('\\[')[1] + '\n'
+            let prefix = replaceInlineMath(line.split('\\[')[0])
+            if (prefix.trim() !== '') {
+              convertedLines.push(prefix)
+            }
+          } else {
+            // Regular line, just replace inline math
+            convertedLines.push(replaceInlineMath(line))
+          }
+        }
 
         // Join the converted lines
         let convertedText = convertedLines.join('\n')
