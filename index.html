@@ -1,47 +1,99 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Character Replacer</title>
+    <title>LaTeX to Markdown Converter</title>
     <script>
-      function replaceCharacters() {
+      function convertLatexToMarkdown() {
         // Get the text from the text area
-        let inputText = document.getElementById('inputText').value;
+        let inputText = document.getElementById('inputText').value
 
-        // Replace the characters while preserving line breaks and removing spaces only between delimiters and content
-        let replacedText = inputText
-          .replace(/\s*\\\(\s*/g, '$')
-          .replace(/\s*\\\)\s*/g, '$')
-          .replace(/\s*\\\[\s*/g, '$$$')
-          .replace(/\s*\\\]\s*/g, '$$$');
+        // Function to replace inline math
+        function replaceInlineMath(text) {
+          return text.replace(/\\\((.*?)\\\)/g, (match, p1) => `$${p1.trim()}$`)
+        }
 
-        // Display the replaced text in the output div
-        document.getElementById('output').innerText = replacedText;
+        // Function to replace display math
+        function replaceDisplayMath(text) {
+          return text.replace(/\\\[([\s\S]*?)\\\]/g, (match, p1) => {
+            // Trim each line and join with a single space
+            let inner = p1
+              .split('\n')
+              .map((line) => line.trim())
+              .join(' ')
+              .trim()
+            return `$$${inner}$$`
+          })
+        }
+
+        // Process the text line by line
+        let lines = inputText.split('\n')
+        let inDisplayMath = false
+        let displayMathContent = ''
+
+        let convertedLines = lines
+          .map((line) => {
+            // Check if we're in a display math block
+            if (inDisplayMath) {
+              if (line.includes('\\]')) {
+                // End of display math block
+                inDisplayMath = false
+                displayMathContent += line.split('\\]')[0]
+                let convertedMath = replaceDisplayMath(
+                  '\\[' + displayMathContent + '\\]'
+                )
+                displayMathContent = ''
+                return convertedMath + replaceInlineMath(line.split('\\]')[1])
+              } else {
+                // Continue collecting display math content
+                displayMathContent += line + '\n'
+                return null // This line will be skipped in the final output
+              }
+            } else if (line.includes('\\[')) {
+              // Start of display math block
+              inDisplayMath = true
+              displayMathContent = line.split('\\[')[1] + '\n'
+              return replaceInlineMath(line.split('\\[')[0])
+            } else {
+              // Regular line, just replace inline math
+              return replaceInlineMath(line)
+            }
+          })
+          .filter((line) => line !== null) // Remove null lines (skipped display math content)
+
+        // Join the converted lines
+        let convertedText = convertedLines.join('\n')
+
+        // Display the converted text in the output div
+        document.getElementById('output').innerText = convertedText
       }
 
       function copyToClipboard() {
-        // Create a temporary textarea to hold the text
-        let tempTextArea = document.createElement('textarea');
-        tempTextArea.value = document.getElementById('output').innerText;
-
-        // Append the textarea to the DOM
-        document.body.appendChild(tempTextArea);
-
-        // Select the text
-        tempTextArea.select();
-
-        // Execute the copy command
-        document.execCommand('copy');
-
-        // Remove the temporary textarea
-        document.body.removeChild(tempTextArea);
+        let outputText = document.getElementById('output').innerText
+        navigator.clipboard
+          .writeText(outputText)
+          .then(() => {
+            alert('Copied to clipboard!')
+          })
+          .catch((err) => {
+            console.error('Failed to copy: ', err)
+          })
       }
     </script>
   </head>
   <body>
-    <h1>Character Replacer</h1>
-    <textarea id="inputText" rows="4" cols="50"></textarea><br />
-    <button onclick="replaceCharacters()">Replace</button>
-    <div id="output" style="white-space: pre-wrap;"></div>
+    <h1>LaTeX to Markdown Converter</h1>
+    <textarea id="inputText" rows="15" cols="80"></textarea><br />
+    <button onclick="convertLatexToMarkdown()">Convert</button>
+    <pre
+      id="output"
+      style="
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background-color: #f0f0f0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      "
+    ></pre>
     <button onclick="copyToClipboard()">Copy Output</button>
   </body>
 </html>
