@@ -73,14 +73,7 @@
 
       function copyToClipboard() {
         let outputText = document.getElementById('output').innerText
-        navigator.clipboard
-          .writeText(outputText)
-          .then(() => {
-            alert('Copied to clipboard!')
-          })
-          .catch((err) => {
-            console.error('Failed to copy: ', err)
-          })
+        navigator.clipboard.writeText(outputText)
       }
     </script>
   </head>
