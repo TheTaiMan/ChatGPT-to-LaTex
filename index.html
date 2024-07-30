@@ -14,8 +14,7 @@
 
         // Function to replace display math
         function replaceDisplayMath(text) {
-          return text.replace(/\\\[([\s\S]*?)\\\]/g, (match, p1) => {
-            // Trim each line and join with a single space
+          return text.replace(/\\\[(.*?)\\\]/gs, (match, p1) => {
             let inner = p1
               .split('\n')
               .map((line) => line.trim())
@@ -25,47 +24,17 @@
           })
         }
 
-        // Process the text line by line
-        let lines = inputText.split('\n')
-        let inDisplayMath = false
-        let displayMathContent = ''
-        let convertedLines = []
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i]
-
-          if (inDisplayMath) {
-            if (line.includes('\\]')) {
-              // End of display math block
-              inDisplayMath = false
-              displayMathContent += line.split('\\]')[0]
-              let convertedMath = replaceDisplayMath(
-                '\\[' + displayMathContent + '\\]'
-              )
-              displayMathContent = ''
-              convertedLines.push(
-                convertedMath + replaceInlineMath(line.split('\\]')[1])
-              )
-            } else {
-              // Continue collecting display math content
-              displayMathContent += line + '\n'
-            }
-          } else if (line.includes('\\[')) {
-            // Start of display math block
-            inDisplayMath = true
-            displayMathContent = line.split('\\[')[1] + '\n'
-            let prefix = replaceInlineMath(line.split('\\[')[0])
-            if (prefix.trim() !== '') {
-              convertedLines.push(prefix)
-            }
-          } else {
-            // Regular line, just replace inline math
-            convertedLines.push(replaceInlineMath(line))
-          }
+        // Function to replace all math
+        function replaceMath(text) {
+          // First replace display math
+          let replacedText = replaceDisplayMath(text)
+          // Then replace inline math
+          replacedText = replaceInlineMath(replacedText)
+          return replacedText
         }
 
-        // Join the converted lines
-        let convertedText = convertedLines.join('\n')
+        // Process the text
+        let convertedText = replaceMath(inputText)
 
         // Display the converted text in the output div
         document.getElementById('output').innerText = convertedText
