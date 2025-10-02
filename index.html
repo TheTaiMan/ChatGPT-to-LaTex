@@ -23,9 +23,11 @@
 
         // Replace alternative inline math: ( ... ) with spaces inside
         function replaceAltInlineMath(text) {
-          // Match ( <space>content<space> )
-          return text.replace(/\(\s+([^\)]*?)\s+\)/g, (match, p1) => {
-            return `$${p1.trim()}$`
+          // Match ( <space>...<space> ) and replace only the bracket+space at the edges with $
+          // This will match: ( ... ) where there is a space after ( and before ), even inside lists or sentences
+          // Allow for punctuation before/after, e.g. 1. Denominator: ( e^x - 1 )
+          return text.replace(/\( ([^\)]*?) \)/g, (match, p1) => {
+            return `$${p1}$`
           })
         }
 
