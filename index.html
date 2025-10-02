@@ -23,12 +23,60 @@
 
         // Replace alternative inline math: ( ... ) with spaces inside
         function replaceAltInlineMath(text) {
-          // Match ( <space>...<space> ) and replace only the bracket+space at the edges with $
-          // This will match: ( ... ) where there is a space after ( and before ), even inside lists or sentences
-          // Allow for punctuation before/after, e.g. 1. Denominator: ( e^x - 1 )
-          return text.replace(/\( ([^\)]*?) \)/g, (match, p1) => {
-            return `$${p1}$`
-          })
+          // Use a more careful approach that handles nested parentheses
+          let result = ''
+          let i = 0
+          
+          while (i < text.length) {
+            // Look for "( " (open paren followed by space)
+            if (i < text.length - 1 && text[i] === '(' && text[i + 1] === ' ') {
+              let start = i
+              i += 2 // skip "( "
+              let depth = 1
+              let content = ''
+              
+              // Scan forward, tracking parenthesis depth
+              while (i < text.length && depth > 0) {
+                if (text[i] === '(') {
+                  depth++
+                  content += text[i]
+                  i++
+                } else if (text[i] === ')') {
+                  depth--
+                  if (depth === 0) {
+                    // Check if there's a space before this closing paren
+                    if (content.endsWith(' ')) {
+                      content = content.slice(0, -1) // remove trailing space
+                      result += `$${content}$`
+                      i++ // skip the closing )
+                      break
+                    } else {
+                      // No space before ), so this isn't a math delimiter
+                      result += text.substring(start, i + 1)
+                      i++
+                      break
+                    }
+                  } else {
+                    content += text[i]
+                    i++
+                  }
+                } else {
+                  content += text[i]
+                  i++
+                }
+              }
+              
+              // If we didn't find a matching close, output the original
+              if (depth > 0) {
+                result += text.substring(start, i)
+              }
+            } else {
+              result += text[i]
+              i++
+            }
+          }
+          
+          return result
         }
 
         // Function to replace inline math (original)
