@@ -3,16 +3,38 @@
   <head>
     <title>LaTeX to Markdown Converter</title>
     <script>
+
       function convertLatexToMarkdown() {
         // Get the text from the text area
         let inputText = document.getElementById('inputText').value
 
-        // Function to replace inline math
+        // Replace alternative display math: standalone [ ... ] blocks
+        function replaceAltDisplayMath(text) {
+          // Match [ on its own line, then content, then ] on its own line
+          return text.replace(/^[ \t]*\[\s*\n([\s\S]*?)^[ \t]*\][ \t]*$/gm, (match, p1) => {
+            let inner = p1
+              .split('\n')
+              .map((line) => line.trim())
+              .join(' ')
+              .trim()
+            return `$$${inner}$$`
+          })
+        }
+
+        // Replace alternative inline math: ( ... ) with spaces inside
+        function replaceAltInlineMath(text) {
+          // Match ( <space>content<space> )
+          return text.replace(/\(\s+([^\)]*?)\s+\)/g, (match, p1, p2) => {
+            return `$${p2.trim()}$`
+          })
+        }
+
+        // Function to replace inline math (original)
         function replaceInlineMath(text) {
           return text.replace(/\\\((.*?)\\\)/g, (match, p1) => `$${p1.trim()}$`)
         }
 
-        // Function to replace display math
+        // Function to replace display math (original)
         function replaceDisplayMath(text) {
           return text.replace(/\\\[(.*?)\\\]/gs, (match, p1) => {
             let inner = p1
@@ -26,9 +48,13 @@
 
         // Function to replace all math
         function replaceMath(text) {
-          // First replace display math
-          let replacedText = replaceDisplayMath(text)
-          // Then replace inline math
+          // First replace alternative display math
+          let replacedText = replaceAltDisplayMath(text)
+          // Then replace original display math
+          replacedText = replaceDisplayMath(replacedText)
+          // Then replace alternative inline math
+          replacedText = replaceAltInlineMath(replacedText)
+          // Then replace original inline math
           replacedText = replaceInlineMath(replacedText)
           return replacedText
         }
