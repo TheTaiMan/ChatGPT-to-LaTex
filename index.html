@@ -24,8 +24,8 @@
         // Replace alternative inline math: ( ... ) with spaces inside
         function replaceAltInlineMath(text) {
           // Match ( <space>content<space> )
-          return text.replace(/\(\s+([^\)]*?)\s+\)/g, (match, p1, p2) => {
-            return `$${p2.trim()}$`
+          return text.replace(/\(\s+([^\)]*?)\s+\)/g, (match, p1) => {
+            return `$${p1.trim()}$`
           })
         }
 
